@@ -1,0 +1,140 @@
+---
+title: "Trabalho Final"
+author: "Igor Pereira"
+date: "2023-04-17"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# QUESTÃO 1
+```{r carregando bibliotecas, include = TRUE}
+library(tidyverse)
+library(rvest)
+library(data.table)
+library(dplyr)
+library(summarytools)
+library(ggplot2)
+library(corrplot)
+library(lubridate)
+library(mice)
+library(shiny)
+library(GGally)
+```
+
+# QUESTÃO 2
+A base escolhida foi a recomendada pelo professor para quem não tinha ideia de que base utilizar.
+```{r carregando a base, include = TRUE}
+base.projeto <- readxl::read_excel('income_democracy.xlsx')
+base.projeto.filtrada <- base.projeto %>%
+  filter(country == "Brazil" | country == "Argentina" | country == "Chile" | country == "Uruguay")
+```
+
+# QUESTÃO 8
+Adiantei a questão 8 para trabalhar com uma base já com os dados imputados. Isso não vai interferir nas respostas das questões 6 e 7.
+```{r imputando dados, include = TRUE}
+dados_imputados <- mice(base.projeto.filtrada, m = 5)
+base.imputada <- complete(dados_imputados, 1)
+```
+
+# QUESTÃO 3
+```{r descrevendo estatisticamente os dados, include = TRUE}
+resposta.questao.3 <- descr(base.imputada)
+```
+
+# QUESTÃO 4
+```{r matriz de espelhamento, include = TRUE}
+dados.matriz <- base.imputada
+colunas <- c("age_median", "educ", "log_gdppc", "dem_ind")
+ggpairs(dados.matriz[, colunas])
+```
+
+# QUESTÃO 5
+#A
+Distribuição normal é aquela que possui o formato de sino, com a maioria dos valores perto do meio, que é a média. A curva é dividida ao meio na média, então se você olhar para um lado da média, vai ver a mesma forma que do outro lado.
+#B
+A escolha de bins foi feita considerando variável selecionada para revelar os padrões importantes.
+```{r gerando os histogramas, include = TRUE}
+hist(base.imputada$dem_ind, breaks = 5, xlim = c(0, 1))
+hist(base.imputada$log_gdppc, breaks = 5, xlim = c(7.5, 9.5))
+hist(base.imputada$log_pop, breaks = 10, xlim = c(7, 12))
+hist(base.imputada$age_1, breaks = 6, xlim = c(0.2, 0.5))
+hist(base.imputada$age_2, breaks = 7, xlim = c(0.22, 0.3))
+hist(base.imputada$age_3, breaks = 5, xlim = c(0.1, 0.25))
+hist(base.imputada$age_4, breaks = 7, xlim = c(0.05, 0.2))
+hist(base.imputada$age_5, breaks = 4, xlim = c(0, 0.2))
+hist(base.imputada$educ, breaks = 4, xlim = c(1, 10))
+hist(base.imputada$age_median, breaks = 4, xlim = c(15, 35))
+```
+#C
+```{r criando gráfifcos q-q, include = TRUE}
+qqnorm(base.imputada$dem_ind)
+qqnorm(base.imputada$log_gdppc)
+qqnorm(base.imputada$log_pop)
+qqnorm(base.imputada$age_1)
+qqnorm(base.imputada$age_2)
+qqnorm(base.imputada$age_3)
+qqnorm(base.imputada$age_4)
+qqnorm(base.imputada$age_5)
+qqnorm(base.imputada$educ)
+qqnorm(base.imputada$age_median)
+```
+#D
+```{r criando gráficos q-q, include = TRUE}
+shapiro.test(base.imputada$dem_ind)
+shapiro.test(base.imputada$log_gdppc)
+shapiro.test(base.imputada$log_pop)
+shapiro.test(base.imputada$age_1)
+shapiro.test(base.imputada$age_2)
+shapiro.test(base.imputada$age_3)
+shapiro.test(base.imputada$age_4)
+shapiro.test(base.imputada$age_5)
+shapiro.test(base.imputada$educ)
+shapiro.test(base.imputada$age_median)
+```
+#E
+Não. Considerando as características (já definidas no item A) que uma distribuição normal tem fica claro que nenhuma das variáveis apresenta essa distribuição.
+
+# QUESTÃO 6
+Completude é nossa avaliação que diz se uma base de dados é boa ou não. Quando a base é completa, por exemplo, ela tem todas as informações que a gente precisa e não possui dados faltantes. Isso é super importante pra gente poder confiar nos resultados que a análise dos dados vai mostrar. Se a base não é completa, pode ter informações faltando ou incompletas e aí a análise não fica tão precisa.
+
+# QUESTÃO 7
+```{r calculando completude, include = TRUE}
+completude.final <- colMeans(!is.na(base.projeto.filtrada))
+completude.final.ordenada <- sort(completude.final, decreasing = TRUE)
+barplot(completude.final.ordenada, main = "Completude das Variáveis", xlab = "Variáveis", ylab = "Completude")
+```
+
+# QUESTÃO 9
+```{r gerando dashboard shiny, include = TRUE}
+dados.shiny <- base.imputada
+dados.shiny$year <- as.Date(paste0(dados.shiny$year, "-01-01"))
+
+ui <- fluidPage(
+  sidebarLayout(
+    sidebarPanel(
+      selectInput(inputId = "variavel", label = "Selecione a variável", choices = names(dados.shiny), selected = "nome_da_variavel"),
+      sliderInput(inputId = "eixo_x", label = "Selecione o valor para o eixo X", min = min(dados.shiny$year), max = max(dados.shiny$year), value = c(min(dados.shiny$year), max(dados.shiny$year)), timeFormat = "%Y"),
+      sliderInput(inputId = "eixo_y", label = "Selecione o valor para o eixo Y", min = min(dados.shiny$nome_da_variavel), max = max(dados.shiny$nome_da_variavel), value = c(min(dados.shiny$nome_da_variavel), max(dados.shiny$nome_da_variavel))),
+      selectInput(inputId = "cor", label = "Selecione a cor da linha", choices = c("Preto" = "black", "Vermelho" = "red", "Verde" = "green"))
+    ),
+    mainPanel(
+      plotOutput(outputId = "grafico")
+    )
+  )
+)
+
+server <- function(input, output) {
+  output$grafico <- renderPlot({
+    dados <- filter(dados.shiny, year >= input$eixo_x[1] & year <= input$eixo_x[2])
+    ggplot(dados, aes(x = year, y = get(input$variavel))) + 
+      geom_line(color = input$cor) +
+      xlab("Ano") +
+      ylab(input$variavel)
+  })
+}
+
+shinyApp(ui = ui, server = server)
+```
