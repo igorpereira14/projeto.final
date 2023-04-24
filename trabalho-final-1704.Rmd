@@ -13,7 +13,6 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r carregando bibliotecas, include = TRUE}
 library(tidyverse)
 library(rvest)
-library(data.table)
 library(dplyr)
 library(summarytools)
 library(ggplot2)
@@ -117,7 +116,7 @@ barplot(completude.final.ordenada, main = "Completude das Variáveis", xlab = "V
 # QUESTÃO 9
 ```{r gerando dashboard shiny, include = TRUE}
 dados.shiny <- base.imputada
-dados.shiny$year <- as.Date(paste0(dados.shiny$year, "-01-01"))
+dados.shiny$year <- ymd(paste0(dados.shiny$year, "-01-01"))
 
 ui <- fluidPage(
   sidebarLayout(
@@ -125,7 +124,7 @@ ui <- fluidPage(
       selectInput(inputId = "variavel", label = "Selecione a variável", choices = names(dados.shiny), selected = "nome_da_variavel"),
       selectInput(inputId = "pais", label = "Selecione o país", choices = unique(dados.shiny$country)),
       sliderInput(inputId = "eixo_x", label = "Selecione o valor para o eixo X", min = min(dados.shiny$year), max = max(dados.shiny$year), value = c(min(dados.shiny$year), max(dados.shiny$year)), timeFormat = "%Y"),
-      sliderInput(inputId = "eixo_y", label = "Selecione o valor para o eixo Y", min = min(dados.shiny$nome_da_variavel), max = max(dados.shiny$nome_da_variavel), value = c(min(dados.shiny$nome_da_variavel), max(dados.shiny$nome_da_variavel))),
+      sliderInput(inputId = "eixo_y", label = "Selecione o valor para o eixo Y", min = 0, max = 30, value = c(10, 20)),
       selectInput(inputId = "cor", label = "Selecione a cor da linha", choices = c("Preto" = "black", "Vermelho" = "red", "Verde" = "green"))
     ),
     mainPanel(
@@ -133,16 +132,26 @@ ui <- fluidPage(
     )
   )
 )
-
 server <- function(input, output) {
   output$grafico <- renderPlot({
-    dados <- filter(dados.shiny, year >= input$eixo_x[1] & year <= input$eixo_x[2])
+    dados <- subset(dados.shiny, country == input$pais)
+    dados <- filter(dados, year >= input$eixo_x[1] & year <= input$eixo_x[2])
     ggplot(dados, aes(x = year, y = get(input$variavel))) + 
       geom_line(color = input$cor) +
       xlab("Ano") +
-      ylab(input$variavel)
+      ylab(input$variavel) +
+      ylim(input$eixo_y)
+  })
+  
+update_ylim <- eventReactive(input$variavel,{
+updateSliderInput(inputId = "eixo_y", value = c(min(dados.shiny[,input$variavel], na.rm = T), max(dados.shiny[,input$variavel], na.rm = T)))
+  
+  })
+
+observe({
+update_ylim()
+  
   })
 }
-
 shinyApp(ui = ui, server = server)
 ```
