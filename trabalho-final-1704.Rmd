@@ -42,7 +42,14 @@ base.imputada <- complete(dados_imputados, 1)
 # QUESTÃO 3
 ```{r descrevendo estatisticamente os dados, include = TRUE}
 resposta.questao.3 <- descr(base.imputada)
+knitr::kable(resposta.questao.3)
 ```
+O grupo "age_1" e "age_2" representam mais de 50% da população em média.
+O grupo "age_3" é o mais parecido entre todos os países selecionados, com um baixo desvio padrão.
+O grupo "age_1" é o que mais difere entre os países, com alto  desvio padrão. O intervalo entre o mínimo e o máximo é bem alto.
+A mediana e a média estão bem parecidas entre os diferentes grupos de idade. Os dados parecem bem centralizados.
+
+Podemos dizer que os dados estão bem uniformes entre os países. Talvez isso seja consequência da proximidade geográfica entre eles.
 
 # QUESTÃO 4
 ```{r matriz de espelhamento, include = TRUE}
