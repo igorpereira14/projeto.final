@@ -33,7 +33,7 @@ base.projeto.filtrada <- base.projeto %>%
 ```
 
 # QUESTÃO 8
-Adiantei a questão 8 para trabalhar com uma base já com os dados imputados. Isso não vai interferir nas respostas das questões 6 e 7.
+A presença de dados faltantes para nas colunas "log_pop" (logarithm of population) e "educ" (average years of education for adults (25 years and older)) no ano de 1960 pode distorcer a análise e levar a conclusões incorretas no meu trabalho final. Além disso, outro ponto importante a ser destacado é a possibilidade de não ter dados suficientes para detectar diferenças significativas entre grupos ou variáveis. Apenas excluir as observações com dados faltantes da análise pode distorcer os resultados, pois estaria excluindo informações importantes. Decidi então utilizar o método "mice" que envolve a criação de múltiplos conjuntos de dados imputados, onde os valores faltantes são substituídos por valores estimados com base em outros dados disponíveis na amostra. Adiantei a questão 8 para trabalhar com uma base já com os dados imputados. Isso não vai interferir nas respostas das questões 6 e 7. 
 ```{r imputando dados, include = TRUE}
 dados_imputados <- mice(base.projeto.filtrada, m = 5)
 base.imputada <- complete(dados_imputados, 1)
@@ -116,6 +116,7 @@ ui <- fluidPage(
   sidebarLayout(
     sidebarPanel(
       selectInput(inputId = "variavel", label = "Selecione a variável", choices = names(dados.shiny), selected = "nome_da_variavel"),
+      selectInput(inputId = "pais", label = "Selecione o país", choices = unique(dados.shiny$country)),
       sliderInput(inputId = "eixo_x", label = "Selecione o valor para o eixo X", min = min(dados.shiny$year), max = max(dados.shiny$year), value = c(min(dados.shiny$year), max(dados.shiny$year)), timeFormat = "%Y"),
       sliderInput(inputId = "eixo_y", label = "Selecione o valor para o eixo Y", min = min(dados.shiny$nome_da_variavel), max = max(dados.shiny$nome_da_variavel), value = c(min(dados.shiny$nome_da_variavel), max(dados.shiny$nome_da_variavel))),
       selectInput(inputId = "cor", label = "Selecione a cor da linha", choices = c("Preto" = "black", "Vermelho" = "red", "Verde" = "green"))
